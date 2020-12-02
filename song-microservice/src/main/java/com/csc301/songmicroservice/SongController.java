@@ -57,11 +57,14 @@ public class SongController {
 	@RequestMapping(value = "/getSongTitleById/{songId}", method = RequestMethod.GET)
 	public @ResponseBody Map<String, Object> getSongTitleById(@PathVariable("songId") String songId,
 			HttpServletRequest request) {
-
 		Map<String, Object> response = new HashMap<String, Object>();
 		response.put("path", String.format("GET %s", Utils.getUrl(request)));
-
-		return null;
+		DbQueryStatus result = this.songDal.getSongTitleById(songId);
+		if (result.getdbQueryExecResult() == DbQueryExecResult.QUERY_OK) {
+			response.put("data", result.getData());
+		}
+		response.put("status", result.getMessage());
+		return response;
 	}
 
 	
