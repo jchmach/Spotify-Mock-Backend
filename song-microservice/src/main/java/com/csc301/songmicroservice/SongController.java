@@ -1,5 +1,6 @@
 package com.csc301.songmicroservice;
 
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -81,8 +82,20 @@ public class SongController {
 
 		Map<String, Object> response = new HashMap<String, Object>();
 		response.put("path", String.format("POST %s", Utils.getUrl(request)));
-
-		return null;
+		if (params.get("songName") == null || params.get("songArtistFullName") == null || params.get("songAlbum") == null) {
+			response.put("status", "ERROR");
+			return response;
+		}
+		else {
+			Song temp = new Song(params.get("songName"), params.get("songArtistFullName"), params.get("songAlbum"));
+			temp.setSongAmountFavourites(0);
+			DbQueryStatus result = this.songDal.addSong(temp);
+			if (result.getdbQueryExecResult() == DbQueryExecResult.QUERY_OK) {
+				response.put("data", ((JSONObject)result.getData()).toMap());				
+			}
+			response.put("status", result.getMessage());
+			return response;
+		}
 	}
 
 	
