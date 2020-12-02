@@ -9,6 +9,8 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
 
+import com.mongodb.client.FindIterable;
+
 @Repository
 public class SongDalImpl implements SongDal {
 
@@ -27,17 +29,17 @@ public class SongDalImpl implements SongDal {
 					.put("songAmountFavourites", Long.toString(songToAdd.getSongAmountFavourites()));
 			
 			Document doc = Document.parse(song.toString());
-			if (!db.collectionExists("songs")) {
-				db.createCollection("songs");
+			if (!this.db.collectionExists("songs")) {
+				this.db.createCollection("songs");
 			}
-			db.getCollection("songs").insertOne(doc);
+			this.db.getCollection("songs").insertOne(doc);
 			DbQueryStatus result = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
 			song.put("id", doc.get("_id").toString());
 			result.setData(song);
 			return result;			
 		}
 		catch(Exception e) {
-			return new DbQueryStatus("NOT OK", DbQueryExecResult.QUERY_ERROR_GENERIC);
+			return new DbQueryStatus("ERROR", DbQueryExecResult.QUERY_ERROR_GENERIC);
 		}
 	}
 
@@ -50,7 +52,19 @@ public class SongDalImpl implements SongDal {
 	@Override
 	public DbQueryStatus getSongTitleById(String songId) {
 		// TODO Auto-generated method stub
-		return null;
+		try {
+			Document query = new Document().append("_id", new ObjectId(songId));
+			FindIterable<Document> results = this.db.getCollection("songs").find(query);
+			if (!results.iterator().hasNext()) {
+				return new DbQueryStatus("NOT FOUND", DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
+			}
+			DbQueryStatus queryResult = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
+			queryResult.setData(results.first().get("songName"));
+			return queryResult;
+		}
+		catch(Exception e) {
+			return new DbQueryStatus("ERROR", DbQueryExecResult.QUERY_ERROR_GENERIC);
+		}
 	}
 
 	@Override
