@@ -65,7 +65,7 @@ public class ProfileController {
 				response.put("status", "ERROR");
 			}
 		}
-return response;
+		return response;
 	}
 
 	@RequestMapping(value = "/followFriend/{userName}/{friendUserName}", method = RequestMethod.PUT)
@@ -74,8 +74,14 @@ return response;
 
 		Map<String, Object> response = new HashMap<String, Object>();
 		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
-		
-		return null;
+		DbQueryStatus result = this.profileDriver.followFriend(userName, friendUserName);
+		if (result.getdbQueryExecResult() == DbQueryExecResult.QUERY_OK) {
+			response.put("status", "OK");
+		}
+		else {
+			response.put("status", "ERROR");
+		}
+		return response;
 	}
 
 	@RequestMapping(value = "/getAllFriendFavouriteSongTitles/{userName}", method = RequestMethod.GET)

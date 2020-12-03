@@ -67,8 +67,19 @@ public class ProfileDriverImpl implements ProfileDriver {
 
 	@Override
 	public DbQueryStatus followFriend(String userName, String frndUserName) {
-		
-		return null;
+		try (Session session = driver.session()){
+        	Map<String, Object> params = new HashMap<>();
+        	params.put("userName", userName);
+        	params.put("friendName", frndUserName);
+			session.writeTransaction(tx -> tx.run("MATCH (p:profile{userName: $userName})," + "(f:profile{userName: $friendName}) \n" + "MERGE (p)-[:follows]->(f) \n", 
+					params));       
+			session.close();
+			return new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			return new DbQueryStatus("ERROR", DbQueryExecResult.QUERY_ERROR_GENERIC);
+		}
 	}
 
 	@Override
