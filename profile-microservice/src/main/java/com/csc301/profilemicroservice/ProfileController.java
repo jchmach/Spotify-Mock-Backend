@@ -13,6 +13,7 @@ import com.csc301.profilemicroservice.Utils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import okhttp3.Call;
+import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -117,8 +118,39 @@ public class ProfileController {
 
 		Map<String, Object> response = new HashMap<String, Object>();
 		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
+		DbQueryStatus result = this.playlistDriver.likeSong(userName, songId);
+		if (result.getdbQueryExecResult() == DbQueryExecResult.QUERY_OK) {
+			HttpUrl.Builder urlBuilder = HttpUrl.parse("http://localhost:3001" + "/updateSongFavouritesCount/" + songId).newBuilder();
+			urlBuilder.addQueryParameter("shouldDecrement", "false");
+			String url = urlBuilder.build().toString();
+			
+			System.out.println(url);
+		    RequestBody body = RequestBody.create(null, new byte[0]);
 
-		return null;
+			Request req = new Request.Builder()
+					.url(url)
+					.method("PUT", body)
+					.build();
+
+			Call call = client.newCall(req);
+			Response responseFromIncrement = null;
+
+
+			
+			try {
+				responseFromIncrement = call.execute();
+				response.put("status", "OK");
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				response.put("status", "ERROR");
+			}
+
+		}
+		else {
+			response.put("status", "ERROR");
+		}
+		return response;
 	}
 
 	@RequestMapping(value = "/unlikeSong/{userName}/{songId}", method = RequestMethod.PUT)
@@ -140,4 +172,15 @@ public class ProfileController {
 		
 		return null;
 	}
+	
+	@RequestMapping(value = "/addSong/{songId}", method = RequestMethod.POST)
+	public @ResponseBody Map<String, Object> addSong(@PathVariable("songId") String songId,
+			HttpServletRequest request) {
+		Map<String, Object> response = new HashMap<String, Object>();
+		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
+		DbQueryStatus result = this.playlistDriver.addSong(songId);
+		response.put("status", result.getMessage());
+		return response;
+	}
+	
 }

@@ -17,8 +17,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import okhttp3.Call;
+import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 
 import javax.servlet.http.HttpServletRequest;
@@ -92,10 +94,35 @@ public class SongController {
 		else {
 			Song temp = new Song(params.get("songName"), params.get("songArtistFullName"), params.get("songAlbum"));
 			temp.setSongAmountFavourites(0);
+			
+			
 			DbQueryStatus result = this.songDal.addSong(temp);
 			if (result.getdbQueryExecResult() == DbQueryExecResult.QUERY_OK) {
 				response.put("data", ((JSONObject)result.getData()).toMap());				
 			}
+			String id = (String) ((JSONObject)result.getData()).get("id");
+			String url = "http://localhost:3002/addSong/" + id;
+			
+			System.out.println(url);
+		    RequestBody body = RequestBody.create(null, new byte[0]);
+
+			Request req = new Request.Builder()
+					.url(url)
+					.method("POST", body)
+					.build();
+		
+			Call call = client.newCall(req);
+			Response responseFromAddSong = null;
+
+			String addSongBody = "{}";
+
+			try {
+				responseFromAddSong = call.execute();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+
+				
 			response.put("status", result.getMessage());
 			return response;
 		}
