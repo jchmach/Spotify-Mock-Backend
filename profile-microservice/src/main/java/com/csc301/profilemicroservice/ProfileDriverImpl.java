@@ -40,8 +40,20 @@ public class ProfileDriverImpl implements ProfileDriver {
 	
 	@Override
 	public DbQueryStatus createUserProfile(String userName, String fullName, String password) {
-		
-		return null;
+		try (Session session = driver.session()){
+        	Map<String, Object> params = new HashMap<>();
+        	params.put("userName", userName);
+        	params.put("fullName", fullName);
+        	params.put("password", password);
+        	session.writeTransaction(tx -> tx.run("MERGE (n:profile {userName: $userName, fullName: $fullName, password: $password})", params));
+			session.close();
+			return new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
+        
+		}
+		catch(Exception e) {
+			return new DbQueryStatus("ERROR", DbQueryExecResult.QUERY_ERROR_GENERIC);
+
+		}
 	}
 
 	@Override
