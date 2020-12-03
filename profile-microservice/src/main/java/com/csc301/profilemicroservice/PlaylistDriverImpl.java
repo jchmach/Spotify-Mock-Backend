@@ -47,7 +47,19 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 	@Override
 	public DbQueryStatus unlikeSong(String userName, String songId) {
 		
-		return null;
+		try (Session session = driver.session()){
+        	Map<String, Object> params = new HashMap<>();
+        	params.put("plName", userName + "-favorites");
+        	params.put("songId", songId);
+			session.writeTransaction(tx -> tx.run("MATCH (p:playlist{plName: $plName})-[r:includes]->(s:song{songId: $songId}) \n" + "DELETE r", 
+					params));  
+			session.close();
+			return new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
+
+		}
+		catch(Exception e) {
+			return new DbQueryStatus("ERROR", DbQueryExecResult.QUERY_ERROR_GENERIC);
+		}
 	}
 
 	@Override
