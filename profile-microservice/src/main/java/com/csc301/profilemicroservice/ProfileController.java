@@ -101,8 +101,14 @@ public class ProfileController {
 
 		Map<String, Object> response = new HashMap<String, Object>();
 		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
-
-		return null;
+		DbQueryStatus result = this.profileDriver.unfollowFriend(userName, friendUserName);
+		if (result.getdbQueryExecResult() == DbQueryExecResult.QUERY_OK) {
+			response.put("status", "OK");
+		}
+		else {
+			response.put("status", "ERROR");
+		}
+		return response;
 	}
 
 	@RequestMapping(value = "/likeSong/{userName}/{songId}", method = RequestMethod.PUT)
