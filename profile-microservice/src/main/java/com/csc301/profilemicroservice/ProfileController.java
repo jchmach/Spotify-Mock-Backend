@@ -160,7 +160,39 @@ public class ProfileController {
 		Map<String, Object> response = new HashMap<String, Object>();
 		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
 
-		return null;
+		DbQueryStatus result = this.playlistDriver.unlikeSong(userName, songId);
+		if (result.getdbQueryExecResult() == DbQueryExecResult.QUERY_OK) {
+			HttpUrl.Builder urlBuilder = HttpUrl.parse("http://localhost:3001" + "/updateSongFavouritesCount/" + songId).newBuilder();
+			urlBuilder.addQueryParameter("shouldDecrement", "true");
+			String url = urlBuilder.build().toString();
+			
+			System.out.println(url);
+		    RequestBody body = RequestBody.create(null, new byte[0]);
+
+			Request req = new Request.Builder()
+					.url(url)
+					.method("PUT", body)
+					.build();
+
+			Call call = client.newCall(req);
+			Response responseFromIncrement = null;
+
+
+			
+			try {
+				responseFromIncrement = call.execute();
+				response.put("status", "OK");
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				response.put("status", "ERROR");
+			}
+
+		}
+		else {
+			response.put("status", "ERROR");
+		}
+		return response;	
 	}
 
 	@RequestMapping(value = "/deleteAllSongsFromDb/{songId}", method = RequestMethod.PUT)
