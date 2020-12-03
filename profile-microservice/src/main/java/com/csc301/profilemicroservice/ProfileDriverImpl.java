@@ -1,5 +1,6 @@
 package com.csc301.profilemicroservice;
 
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -46,11 +47,19 @@ public class ProfileDriverImpl implements ProfileDriver {
         	params.put("fullName", fullName);
         	params.put("password", password);
         	session.writeTransaction(tx -> tx.run("MERGE (n:profile {userName: $userName, fullName: $fullName, password: $password})", params));
+        	Map<String, Object> playlistParams = new HashMap<>();
+        	String temp = userName + "-favorites";
+        	params.put("plName", temp);
+        	playlistParams.put("plName", temp);
+        	session.writeTransaction(tx -> tx.run("MERGE (n:playlist {plName: $plName})", params));
+			session.writeTransaction(tx -> tx.run("MATCH (p:playlist{plName: $plName})," + "(n:profile{userName: $userName, fullName: $fullName, password: $password}) \n" + "MERGE (n)-[:created]->(p) \n", 
+					params));
 			session.close();
 			return new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
         
 		}
 		catch(Exception e) {
+			e.printStackTrace();
 			return new DbQueryStatus("ERROR", DbQueryExecResult.QUERY_ERROR_GENERIC);
 
 		}
