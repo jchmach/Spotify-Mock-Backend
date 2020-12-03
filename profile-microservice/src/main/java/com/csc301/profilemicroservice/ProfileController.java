@@ -52,8 +52,20 @@ public class ProfileController {
 
 		Map<String, Object> response = new HashMap<String, Object>();
 		response.put("path", String.format("POST %s", Utils.getUrl(request)));
-
-		return null;
+		if (params.get("userName") == null || params.get("fullName") == null || params.get("password") == null) {
+			response.put("status", "ERROR");
+			return response;
+		}
+		else {
+			DbQueryStatus result = this.profileDriver.createUserProfile(params.get("userName"),params.get("fullName"), params.get("password"));
+			if (result.getdbQueryExecResult() == DbQueryExecResult.QUERY_OK) {
+				response.put("status", "OK");
+			}
+			else {
+				response.put("status", "ERROR");
+			}
+		}
+return response;
 	}
 
 	@RequestMapping(value = "/followFriend/{userName}/{friendUserName}", method = RequestMethod.PUT)
