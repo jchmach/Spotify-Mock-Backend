@@ -33,8 +33,10 @@ public class PlaylistDriverImpl implements PlaylistDriver {
         	Map<String, Object> params = new HashMap<>();
         	params.put("plName", userName + "-favorites");
         	params.put("songId", songId);
-        	StatementResult result = session.writeTransaction(tx -> tx.run("MATCH (s:song{songId: $songId})", params));
-        	if (!result.hasNext()) {
+        	params.put("userName", userName);
+        	StatementResult result = session.writeTransaction(tx -> tx.run("MATCH (s:song{songId: $songId}) RETURN s", params));
+        	StatementResult userResult = session.writeTransaction(tx -> tx.run("MATCH (s:profile{userName: $userName}) RETURN s", params));
+        	if (!result.hasNext() || !userResult.hasNext()) {
     			return new DbQueryStatus("NOT_FOUND", DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
 
         	}
@@ -45,6 +47,7 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 
 		}
 		catch(Exception e) {
+			e.printStackTrace();
 			return new DbQueryStatus("ERROR", DbQueryExecResult.QUERY_ERROR_GENERIC);
 		}
 	}
