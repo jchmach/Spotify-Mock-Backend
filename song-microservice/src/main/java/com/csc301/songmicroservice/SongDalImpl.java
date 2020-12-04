@@ -70,7 +70,21 @@ public class SongDalImpl implements SongDal {
 	@Override
 	public DbQueryStatus deleteSongById(String songId) {
 		// TODO Auto-generated method stub
-		return null;
+		try {
+			Document query = new Document().append("_id", new ObjectId(songId));
+	        Document result = db.getCollection("songs").findOneAndDelete(query);
+	        if (result != null) {
+	        	return new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
+	        }
+	        else {
+	        	return new DbQueryStatus("NOT FOUND", DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
+	        }
+
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+			return new DbQueryStatus("ERROR", DbQueryExecResult.QUERY_ERROR_GENERIC);
+		}
 	}
 
 	@Override

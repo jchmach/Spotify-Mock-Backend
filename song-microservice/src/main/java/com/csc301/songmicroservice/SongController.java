@@ -76,8 +76,35 @@ public class SongController {
 
 		Map<String, Object> response = new HashMap<String, Object>();
 		response.put("path", String.format("DELETE %s", Utils.getUrl(request)));
+		DbQueryStatus result = this.songDal.deleteSongById(songId);
+		if (result.getdbQueryExecResult() == DbQueryExecResult.QUERY_OK) {
 
-		return null;
+			String url = "http://localhost:3002/deleteAllSongsFromDb/" + songId;
+			
+		    RequestBody body = RequestBody.create(null, new byte[0]);
+
+			Request req = new Request.Builder()
+					.url(url)
+					.method("PUT", body)
+					.build();
+		
+			Call call = client.newCall(req);
+			Response responseFromDeleteSong = null;
+
+			String addSongBody = "{}";
+
+			try {
+				responseFromDeleteSong = call.execute();
+				response.put("status", "OK");
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+
+		}
+		else {
+			response.put("status", "ERROR");
+		}
+		return response;
 	}
 
 	
