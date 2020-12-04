@@ -1,5 +1,6 @@
 package com.csc301.profilemicroservice;
 
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -40,25 +41,94 @@ public class ProfileDriverImpl implements ProfileDriver {
 	
 	@Override
 	public DbQueryStatus createUserProfile(String userName, String fullName, String password) {
-		
-		return null;
+		try (Session session = driver.session()){
+        	Map<String, Object> params = new HashMap<>();
+        	params.put("userName", userName);
+        	params.put("fullName", fullName);
+        	params.put("password", password);
+        	session.writeTransaction(tx -> tx.run("MERGE (n:profile {userName: $userName, fullName: $fullName, password: $password})", params));
+        	Map<String, Object> playlistParams = new HashMap<>();
+        	String temp = userName + "-favorites";
+        	params.put("plName", temp);
+        	playlistParams.put("plName", temp);
+        	session.writeTransaction(tx -> tx.run("MERGE (n:playlist {plName: $plName})", params));
+			session.writeTransaction(tx -> tx.run("MATCH (p:playlist{plName: $plName})," + "(n:profile{userName: $userName, fullName: $fullName, password: $password}) \n" + "MERGE (n)-[:created]->(p) \n", 
+					params));
+			session.close();
+			return new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
+        
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+			return new DbQueryStatus("ERROR", DbQueryExecResult.QUERY_ERROR_GENERIC);
+
+		}
 	}
 
 	@Override
 	public DbQueryStatus followFriend(String userName, String frndUserName) {
-		
-		return null;
+		try (Session session = driver.session()){
+        	Map<String, Object> params = new HashMap<>();
+        	params.put("userName", userName);
+        	params.put("friendName", frndUserName);
+			session.writeTransaction(tx -> tx.run("MATCH (p:profile{userName: $userName})," + "(f:profile{userName: $friendName}) \n" + "MERGE (p)-[:follows]->(f) \n", 
+					params));       
+			session.close();
+			return new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			return new DbQueryStatus("ERROR", DbQueryExecResult.QUERY_ERROR_GENERIC);
+		}
 	}
 
 	@Override
 	public DbQueryStatus unfollowFriend(String userName, String frndUserName) {
-		
-		return null;
+		try (Session session = driver.session()){
+        	Map<String, Object> params = new HashMap<>();
+        	params.put("userName", userName);
+        	params.put("friendName", frndUserName);
+			session.writeTransaction(tx -> tx.run("MATCH (p:profile{userName: $userName})-[r:follows]->(f:profile{userName: $friendName}) \n" + "DELETE r", 
+					params));       
+			session.close();
+			System.out.println("wrong here");
+			return new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			return new DbQueryStatus("ERROR", DbQueryExecResult.QUERY_ERROR_GENERIC);
+		}
 	}
 
 	@Override
 	public DbQueryStatus getAllSongFriendsLike(String userName) {
-			
-		return null;
+		try(Session session = driver.session()){
+        	Map<String, Object> params = new HashMap<>();
+        	params.put("userName", userName);
+        	params.put("plName", "");
+        	ArrayList<String> ids = null;
+        	StatementResult result = session.readTransaction(tx -> tx.run("MATCH (p:profile{userName: $userName})-[:follows]->(f) RETURN f", params));
+        	Map<String, Object> following = new HashMap<>();
+        	while(result.hasNext()) {
+        		 ids = new ArrayList<String>();
+        		 Record profile = result.next();
+        		 params.replace("plName", profile.get("f").get("userName").asString() + "-favorites");
+        		 
+        		 StatementResult songs = session.readTransaction(tx -> tx.run("MATCH (p:playlist{plName: $plName})-[:includes]->(s) RETURN s", params));
+        		 while (songs.hasNext()) {
+        			 System.out.println("ran here");
+        			 ids.add(songs.next().get("s").get("songId").asString());
+        		 }
+        		 following.put(profile.get("f").get("userName").asString(), ids);
+        	}
+        	System.out.println(params.toString());
+        	DbQueryStatus response = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
+        	response.setData(following);
+        	return response;
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+			return new DbQueryStatus("ERROR", DbQueryExecResult.QUERY_ERROR_GENERIC);			
+		}
 	}
 }
