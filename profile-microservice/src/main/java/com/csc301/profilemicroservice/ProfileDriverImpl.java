@@ -77,7 +77,9 @@ public class ProfileDriverImpl implements ProfileDriver {
         	params.put("friendName", frndUserName);
         	StatementResult user = session.readTransaction(tx -> tx.run("MATCH (n:profile {userName: $userName}) RETURN n", params));
         	StatementResult friend = session.readTransaction(tx -> tx.run("MATCH (n:profile {userName: $friendName}) RETURN n", params));
-        	if (!user.hasNext() || !friend.hasNext() || userName.equals(frndUserName)) {
+        	StatementResult relation = session.readTransaction(tx -> tx.run("MATCH (p:profile{userName: $userName})-[r:follows]->(f:profile{userName: $friendName}) RETURN r", params));
+        	
+        	if (!user.hasNext() || !friend.hasNext() || relation.hasNext() || userName.equals(frndUserName)) {
         		return new DbQueryStatus("NOT FOUND", DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
         	}
 			session.writeTransaction(tx -> tx.run("MATCH (p:profile{userName: $userName})," + "(f:profile{userName: $friendName}) \n" + "MERGE (p)-[:follows]->(f) \n", 
