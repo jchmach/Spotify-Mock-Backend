@@ -46,6 +46,10 @@ public class ProfileDriverImpl implements ProfileDriver {
         	params.put("userName", userName);
         	params.put("fullName", fullName);
         	params.put("password", password);
+        	StatementResult result = session.writeTransaction(tx -> tx.run("MATCH (n:profile {userName: $userName, fullName: $fullName, password: $password}) RETURN n", params));
+        	if(result.hasNext()) {
+        		return new DbQueryStatus("ERROR", DbQueryExecResult.QUERY_ERROR_GENERIC);
+        	}
         	session.writeTransaction(tx -> tx.run("MERGE (n:profile {userName: $userName, fullName: $fullName, password: $password})", params));
         	Map<String, Object> playlistParams = new HashMap<>();
         	String temp = userName + "-favorites";
