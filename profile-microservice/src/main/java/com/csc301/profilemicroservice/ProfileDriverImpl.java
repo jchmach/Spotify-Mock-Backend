@@ -122,6 +122,10 @@ public class ProfileDriverImpl implements ProfileDriver {
         	params.put("userName", userName);
         	params.put("plName", "");
         	ArrayList<String> ids = null;
+        	StatementResult exists = session.readTransaction(tx -> tx.run("MATCH (p:profile{userName: $userName}) RETURN p", params));
+        	if (!exists.hasNext()) {
+        		return new DbQueryStatus("ERROR", DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
+        	}
         	StatementResult result = session.readTransaction(tx -> tx.run("MATCH (p:profile{userName: $userName})-[:follows]->(f) RETURN f", params));
         	Map<String, Object> following = new HashMap<>();
         	while(result.hasNext()) {
@@ -136,7 +140,6 @@ public class ProfileDriverImpl implements ProfileDriver {
         		 }
         		 following.put(profile.get("f").get("userName").asString(), ids);
         	}
-        	System.out.println(params.toString());
         	DbQueryStatus response = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
         	response.setData(following);
         	return response;
