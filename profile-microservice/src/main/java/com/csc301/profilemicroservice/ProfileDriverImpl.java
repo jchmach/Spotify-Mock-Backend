@@ -46,7 +46,7 @@ public class ProfileDriverImpl implements ProfileDriver {
         	params.put("userName", userName);
         	params.put("fullName", fullName);
         	params.put("password", password);
-        	StatementResult result = session.writeTransaction(tx -> tx.run("MATCH (n:profile {userName: $userName, fullName: $fullName, password: $password}) RETURN n", params));
+        	StatementResult result = session.readTransaction(tx -> tx.run("MATCH (n:profile {userName: $userName, fullName: $fullName, password: $password}) RETURN n", params));
         	if(result.hasNext()) {
         		return new DbQueryStatus("ERROR", DbQueryExecResult.QUERY_ERROR_GENERIC);
         	}
@@ -75,8 +75,8 @@ public class ProfileDriverImpl implements ProfileDriver {
         	Map<String, Object> params = new HashMap<>();
         	params.put("userName", userName);
         	params.put("friendName", frndUserName);
-        	StatementResult user = session.writeTransaction(tx -> tx.run("MATCH (n:profile {userName: $userName}) RETURN n", params));
-        	StatementResult friend = session.writeTransaction(tx -> tx.run("MATCH (n:profile {userName: $friendName}) RETURN n", params));
+        	StatementResult user = session.readTransaction(tx -> tx.run("MATCH (n:profile {userName: $userName}) RETURN n", params));
+        	StatementResult friend = session.readTransaction(tx -> tx.run("MATCH (n:profile {userName: $friendName}) RETURN n", params));
         	if (!user.hasNext() || !friend.hasNext() || userName.equals(frndUserName)) {
         		return new DbQueryStatus("NOT FOUND", DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
         	}
@@ -97,6 +97,12 @@ public class ProfileDriverImpl implements ProfileDriver {
         	Map<String, Object> params = new HashMap<>();
         	params.put("userName", userName);
         	params.put("friendName", frndUserName);
+        	StatementResult user = session.readTransaction(tx -> tx.run("MATCH (n:profile {userName: $userName}) RETURN n", params));
+        	StatementResult friend = session.readTransaction(tx -> tx.run("MATCH (n:profile {userName: $friendName}) RETURN n", params));
+        	StatementResult relation = session.readTransaction(tx -> tx.run("MATCH (p:profile{userName: $userName})-[r:follows]->(f:profile{userName: $friendName}) RETURN r", params));
+        	if (!user.hasNext() || !friend.hasNext() || !relation.hasNext()) {
+        		return new DbQueryStatus("NOT FOUND", DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
+        	}
 			session.writeTransaction(tx -> tx.run("MATCH (p:profile{userName: $userName})-[r:follows]->(f:profile{userName: $friendName}) \n" + "DELETE r", 
 					params));       
 			session.close();
