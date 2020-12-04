@@ -51,6 +51,11 @@ public class PlaylistDriverImpl implements PlaylistDriver {
         	Map<String, Object> params = new HashMap<>();
         	params.put("plName", userName + "-favorites");
         	params.put("songId", songId);
+			StatementResult result = session.writeTransaction(tx -> tx.run("MATCH (p:playlist{plName: $plName})-[r:includes]->(s:song{songId: $songId}) \n" + "RETURN r", 
+					params));          	
+			if (!result.hasNext()) {
+				return new DbQueryStatus("NOT_FOUND", DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
+			}
 			session.writeTransaction(tx -> tx.run("MATCH (p:playlist{plName: $plName})-[r:includes]->(s:song{songId: $songId}) \n" + "DELETE r", 
 					params));  
 			session.close();
