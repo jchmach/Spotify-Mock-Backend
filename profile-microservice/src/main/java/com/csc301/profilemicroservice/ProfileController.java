@@ -1,6 +1,5 @@
 package com.csc301.profilemicroservice;
 
-import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,7 +13,6 @@ import com.csc301.profilemicroservice.Utils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import okhttp3.Call;
-import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -23,7 +21,6 @@ import okhttp3.Response;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -55,20 +52,8 @@ public class ProfileController {
 
 		Map<String, Object> response = new HashMap<String, Object>();
 		response.put("path", String.format("POST %s", Utils.getUrl(request)));
-		if (params.get("userName") == null || params.get("fullName") == null || params.get("password") == null) {
-			response.put("status", "ERROR");
-			return response;
-		}
-		else {
-			DbQueryStatus result = this.profileDriver.createUserProfile(params.get("userName"),params.get("fullName"), params.get("password"));
-			if (result.getdbQueryExecResult() == DbQueryExecResult.QUERY_OK) {
-				response.put("status", "OK");
-			}
-			else {
-				response.put("status", "ERROR");
-			}
-		}
-		return response;
+
+		return null;
 	}
 
 	@RequestMapping(value = "/followFriend/{userName}/{friendUserName}", method = RequestMethod.PUT)
@@ -77,14 +62,8 @@ public class ProfileController {
 
 		Map<String, Object> response = new HashMap<String, Object>();
 		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
-		DbQueryStatus result = this.profileDriver.followFriend(userName, friendUserName);
-		if (result.getdbQueryExecResult() == DbQueryExecResult.QUERY_OK) {
-			response.put("status", "OK");
-		}
-		else {
-			response.put("status", "ERROR");
-		}
-		return response;
+		
+		return null;
 	}
 
 	@RequestMapping(value = "/getAllFriendFavouriteSongTitles/{userName}", method = RequestMethod.GET)
@@ -93,52 +72,8 @@ public class ProfileController {
 
 		Map<String, Object> response = new HashMap<String, Object>();
 		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
-		DbQueryStatus result = this.profileDriver.getAllSongFriendsLike(userName);
-		if (result.getdbQueryExecResult() == DbQueryExecResult.QUERY_OK) {
-			Map<String, Object> ids = (Map<String, Object>) result.getData();
-			Map<String, Object> titles = new HashMap<String, Object>();
-			ArrayList<String> songs = new ArrayList<String>();
-			JSONObject json;
-			Iterator it = ids.entrySet().iterator();
-			while (it.hasNext()) {
-				songs = new ArrayList<String>();
-				Map.Entry pair = (Map.Entry)it.next();
-				ArrayList<String> songIds = (ArrayList<String>) pair.getValue();
-				for (int i = 0; i < songIds.size(); i++) {
-					String url = "http://localhost:3001/getSongTitleById/" + songIds.get(i);
-					
 
-					Request req = new Request.Builder()
-							.url(url)
-							.method("GET", null)
-							.build();
-
-					Call call = client.newCall(req);
-					Response responseFromGetSong = null;
-					
-
-					
-					try {
-						responseFromGetSong = call.execute();
-						json = new JSONObject (responseFromGetSong.body().string());
-						songs.add(json.getString("data"));
-						
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-						response.put("status", "ERROR");
-						return response;
-					}
-				}
-				titles.put(pair.getKey().toString(), songs);
-			}
-			response.put("data", titles);
-			response.put("status", "OK");
-		}
-		else {
-			response.put("status", "ERROR");
-		}
-		return response;
+		return null;
 	}
 
 
@@ -148,14 +83,8 @@ public class ProfileController {
 
 		Map<String, Object> response = new HashMap<String, Object>();
 		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
-		DbQueryStatus result = this.profileDriver.unfollowFriend(userName, friendUserName);
-		if (result.getdbQueryExecResult() == DbQueryExecResult.QUERY_OK) {
-			response.put("status", "OK");
-		}
-		else {
-			response.put("status", "ERROR");
-		}
-		return response;
+
+		return null;
 	}
 
 	@RequestMapping(value = "/likeSong/{userName}/{songId}", method = RequestMethod.PUT)
@@ -164,39 +93,8 @@ public class ProfileController {
 
 		Map<String, Object> response = new HashMap<String, Object>();
 		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
-		DbQueryStatus result = this.playlistDriver.likeSong(userName, songId);
-		if (result.getdbQueryExecResult() == DbQueryExecResult.QUERY_OK) {
-			HttpUrl.Builder urlBuilder = HttpUrl.parse("http://localhost:3001" + "/updateSongFavouritesCount/" + songId).newBuilder();
-			urlBuilder.addQueryParameter("shouldDecrement", "false");
-			String url = urlBuilder.build().toString();
-			
-			System.out.println(url);
-		    RequestBody body = RequestBody.create(null, new byte[0]);
 
-			Request req = new Request.Builder()
-					.url(url)
-					.method("PUT", body)
-					.build();
-
-			Call call = client.newCall(req);
-			Response responseFromIncrement = null;
-
-
-			
-			try {
-				responseFromIncrement = call.execute();
-				response.put("status", "OK");
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				response.put("status", "ERROR");
-			}
-
-		}
-		else {
-			response.put("status", "ERROR");
-		}
-		return response;
+		return null;
 	}
 
 	@RequestMapping(value = "/unlikeSong/{userName}/{songId}", method = RequestMethod.PUT)
@@ -206,39 +104,7 @@ public class ProfileController {
 		Map<String, Object> response = new HashMap<String, Object>();
 		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
 
-		DbQueryStatus result = this.playlistDriver.unlikeSong(userName, songId);
-		if (result.getdbQueryExecResult() == DbQueryExecResult.QUERY_OK) {
-			HttpUrl.Builder urlBuilder = HttpUrl.parse("http://localhost:3001" + "/updateSongFavouritesCount/" + songId).newBuilder();
-			urlBuilder.addQueryParameter("shouldDecrement", "true");
-			String url = urlBuilder.build().toString();
-			
-			System.out.println(url);
-		    RequestBody body = RequestBody.create(null, new byte[0]);
-
-			Request req = new Request.Builder()
-					.url(url)
-					.method("PUT", body)
-					.build();
-
-			Call call = client.newCall(req);
-			Response responseFromIncrement = null;
-
-
-			
-			try {
-				responseFromIncrement = call.execute();
-				response.put("status", "OK");
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				response.put("status", "ERROR");
-			}
-
-		}
-		else {
-			response.put("status", "ERROR");
-		}
-		return response;	
+		return null;
 	}
 
 	@RequestMapping(value = "/deleteAllSongsFromDb/{songId}", method = RequestMethod.PUT)
@@ -247,24 +113,7 @@ public class ProfileController {
 
 		Map<String, Object> response = new HashMap<String, Object>();
 		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
-		DbQueryStatus result = this.playlistDriver.deleteSongFromDb(songId);
-		if (result.getdbQueryExecResult() == DbQueryExecResult.QUERY_OK) {
-			response.put("status", "OK");
-		}
-		else {
-			response.put("status", "ERROR");
-		}
-		return response;
+		
+		return null;
 	}
-	
-	@RequestMapping(value = "/addSong/{songId}", method = RequestMethod.POST)
-	public @ResponseBody Map<String, Object> addSong(@PathVariable("songId") String songId,
-			HttpServletRequest request) {
-		Map<String, Object> response = new HashMap<String, Object>();
-		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
-		DbQueryStatus result = this.playlistDriver.addSong(songId);
-		response.put("status", result.getMessage());
-		return response;
-	}
-	
 }
