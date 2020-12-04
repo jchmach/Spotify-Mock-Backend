@@ -102,7 +102,33 @@ public class ProfileDriverImpl implements ProfileDriver {
 
 	@Override
 	public DbQueryStatus getAllSongFriendsLike(String userName) {
-			
-		return null;
+		try(Session session = driver.session()){
+        	Map<String, Object> params = new HashMap<>();
+        	params.put("userName", userName);
+        	params.put("plName", "");
+        	ArrayList<String> ids = null;
+        	StatementResult result = session.readTransaction(tx -> tx.run("MATCH (p:profile{userName: $userName})-[:follows]->(f) RETURN f", params));
+        	Map<String, Object> following = new HashMap<>();
+        	while(result.hasNext()) {
+        		 ids = new ArrayList<String>();
+        		 Record profile = result.next();
+        		 params.replace("plName", profile.get("f").get("userName").asString() + "-favorites");
+        		 
+        		 StatementResult songs = session.readTransaction(tx -> tx.run("MATCH (p:playlist{plName: $plName})-[:includes]->(s) RETURN s", params));
+        		 while (songs.hasNext()) {
+        			 System.out.println("ran here");
+        			 ids.add(songs.next().get("s").get("songId").asString());
+        		 }
+        		 following.put(profile.get("f").get("userName").asString(), ids);
+        	}
+        	System.out.println(params.toString());
+        	DbQueryStatus response = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
+        	response.setData(following);
+        	return response;
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+			return new DbQueryStatus("ERROR", DbQueryExecResult.QUERY_ERROR_GENERIC);			
+		}
 	}
 }

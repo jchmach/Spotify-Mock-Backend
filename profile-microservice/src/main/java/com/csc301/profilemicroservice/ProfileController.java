@@ -1,5 +1,6 @@
 package com.csc301.profilemicroservice;
 
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,6 +23,7 @@ import okhttp3.Response;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -91,8 +93,52 @@ public class ProfileController {
 
 		Map<String, Object> response = new HashMap<String, Object>();
 		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
+		DbQueryStatus result = this.profileDriver.getAllSongFriendsLike(userName);
+		if (result.getdbQueryExecResult() == DbQueryExecResult.QUERY_OK) {
+			Map<String, Object> ids = (Map<String, Object>) result.getData();
+			Map<String, Object> titles = new HashMap<String, Object>();
+			ArrayList<String> songs = new ArrayList<String>();
+			JSONObject json;
+			Iterator it = ids.entrySet().iterator();
+			while (it.hasNext()) {
+				songs = new ArrayList<String>();
+				Map.Entry pair = (Map.Entry)it.next();
+				ArrayList<String> songIds = (ArrayList<String>) pair.getValue();
+				for (int i = 0; i < songIds.size(); i++) {
+					String url = "http://localhost:3001/getSongTitleById/" + songIds.get(i);
+					
 
-		return null;
+					Request req = new Request.Builder()
+							.url(url)
+							.method("GET", null)
+							.build();
+
+					Call call = client.newCall(req);
+					Response responseFromGetSong = null;
+					
+
+					
+					try {
+						responseFromGetSong = call.execute();
+						json = new JSONObject (responseFromGetSong.body().string());
+						songs.add(json.getString("data"));
+						
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+						response.put("status", "ERROR");
+						return response;
+					}
+				}
+				titles.put(pair.getKey().toString(), songs);
+			}
+			response.put("data", titles);
+			response.put("status", "OK");
+		}
+		else {
+			response.put("status", "ERROR");
+		}
+		return response;
 	}
 
 
