@@ -1,5 +1,7 @@
-# a3-jmach
-a3-jmach created by GitHub Classroom
+# What is this project?
 
-Note that there is a develop branch and I have been following proper gitflow and merging into develop, but I made a mistake and messed up main so I forced pushed main. 
-That's why it looks like I have only have been merging back to main when I wasn't.
+A REST Java API implemented using a microservice architecture that uses Neo4j and MongoDb that was written in CSCC01 during the Fall 2020 Semester.
+
+## What does it do?
+
+This API allows users to manipulate songs like one would do in Spotify. They can add/like, remove/unlike songs or follow friends and see their liked songs.
